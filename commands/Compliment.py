@@ -34,6 +34,7 @@ class Compliment(Command):
         # remove them all then add it again to scheduler
         self.compliment_scheduler.enter(1800, 1, self.load_compliments)
 
+    # probably make it a coroutine
     def load_compliments(self):
         print("Compliments are being loaded")
         self.compliments.clear()

@@ -2,7 +2,7 @@ import discord
 import random
 import string
 from command import Command
-from PIL import Image, ImageChops, ImageDraw, ImageEnhance
+from PIL import Image, ImageDraw, ImageFont
 
 class Meme(Command):
     
@@ -10,11 +10,13 @@ class Meme(Command):
         super().__init__("meme", self.meme)
 
     async def download_image(self, attachment):
+        print("Currently downloading image.")
         name = ''.join(random.choices(string.ascii_lowercase + string.digits, k=12))
         try:
             await attachment.save(f"memes/{name}")
         except Exception as e:
-            await message.channel.send(f"Failed to download attachment to memeify! (Exception: {str(e)}")
+            await message.channel.send(f"Failed to download attachment to memeify! (Exception: {str(e)})")
+        print(f"Done downloading image {name}")
         return name
         
     async def meme(self, message):
@@ -35,11 +37,12 @@ class Meme(Command):
             print(attachment)
             if(attachment.content_type.startswith("image")):
                 name = await self.download_image(attachment)
-                self.memeify(name, bot, top)
-
+                self.memeify(name, bot.upper(), top)
+                await message.channel.send(file=discord.File(f"memes/{name}_meme.png"))
 
     def memeify(self, name, bot, top):
-        im = Image.open(name)
+        print(f"Trying to memeify image {name}.")
+        im = Image.open(f"memes/{name}")
         draw = ImageDraw.Draw(im)
         start_size = 32
         font = ImageFont.truetype("fonts/CooperHewitt-Bold.otf", start_size)
@@ -61,4 +64,4 @@ class Meme(Command):
             stroke_size = 5
         draw.text((width*0.05, height*0.05), bot, "#fff", font=new_font, stroke_width=stroke_size, stroke_fill="#000")
 
-        im.save(f"{name}_meme.png")
+        im.save(f"memes/{name}_meme.png")
