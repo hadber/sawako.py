@@ -34,7 +34,8 @@ class Meme(Command):
         else:
             text = args[1].split(';')
             bot, *top = text[0:]
-            top = top[0] or None
+            if top:
+                top = top[0]
 
         for attachment in message.attachments:
             if(attachment.content_type.startswith("image")):
@@ -49,11 +50,11 @@ class Meme(Command):
         width, height = im.size
             
         new_font, stroke_size = self.find_size(width, height, bot)
-        draw.multiline_text((width*0.05, height*0.05), bot, "#fff", font=new_font, align='center', stroke_width=stroke_size, stroke_fill="#000")
+        draw.multiline_text((width*0.05, height*0.75), bot, "#fff", font=new_font, align='center', stroke_width=stroke_size, stroke_fill="#000")
 
         if(top):
             new_font, stroke_size = self.find_size(width, height, top)
-            draw.multiline_text((width*0.05, height*0.75), top, "#fff", font=new_font, align='center', stroke_width=stroke_size, stroke_fill="#000")
+            draw.multiline_text((width*0.05, height*0.05), top, "#fff", font=new_font, align='center', stroke_width=stroke_size, stroke_fill="#000")    
 
         im.save(f"memes/{name}_meme.png")
 
