@@ -6,6 +6,8 @@ from PIL import Image, ImageDraw, ImageFont
 
 class Meme(Command):
     
+    V_FILL = 0.9 # vertical fill percentage
+
     def __init__(self):
         super().__init__("meme", self.meme)
 
@@ -20,9 +22,9 @@ class Meme(Command):
         return name
         
     async def meme(self, message):
-        args = message.content.split(' ')
-        if len(args) > 3:
-            await message.channel.send("Bad arguments! Usage: .meme [bottom_text] <top_text>")
+        args = message.content.split(' ', maxsplit=1)
+        if len(args) > 2:
+            await message.channel.send("Bad arguments! Usage: .meme [bottom_text];<top_text>")
             return
         
         # check whether it mentions a message or if the image is inside the message
@@ -30,27 +32,39 @@ class Meme(Command):
             bot = "bottom text"
             top = None
         else:
-            bot, *top = args[1:]
-            top = top or None
+            text = args[1].split(';')
+            bot, *top = text[0:]
+            top = top[0] or None
 
         for attachment in message.attachments:
-            print(attachment)
             if(attachment.content_type.startswith("image")):
                 name = await self.download_image(attachment)
-                self.memeify(name, bot.upper(), top)
+                self.memeify(name, bot.upper(), top.upper() if top else top)
                 await message.channel.send(file=discord.File(f"memes/{name}_meme.png"))
 
     def memeify(self, name, bot, top):
         print(f"Trying to memeify image {name}.")
         im = Image.open(f"memes/{name}")
         draw = ImageDraw.Draw(im)
+        width, height = im.size
+            
+        new_font, stroke_size = self.find_size(width, height, bot)
+        draw.multiline_text((width*0.05, height*0.05), bot, "#fff", font=new_font, align='center', stroke_width=stroke_size, stroke_fill="#000")
+
+        if(top):
+            new_font, stroke_size = self.find_size(width, height, top)
+            draw.multiline_text((width*0.05, height*0.75), top, "#fff", font=new_font, align='center', stroke_width=stroke_size, stroke_fill="#000")
+
+        im.save(f"memes/{name}_meme.png")
+
+    def find_size(self, width, height, text):
+
         start_size = 32
         font = ImageFont.truetype("fonts/CooperHewitt-Bold.otf", start_size)
-        font_size = font.getsize(bot)
-        width, height = im.size
+        font_size = font.getsize(text)
 
         current_use = font_size[0] / width
-        newp = (start_size * 0.9) / current_use
+        newp = (start_size * self.V_FILL) / current_use
         new_size = int(newp)
         new_font = font.font_variant(size=new_size)
 
@@ -62,6 +76,5 @@ class Meme(Command):
             stroke_size = 3
         else:
             stroke_size = 5
-        draw.text((width*0.05, height*0.05), bot, "#fff", font=new_font, stroke_width=stroke_size, stroke_fill="#000")
 
-        im.save(f"memes/{name}_meme.png")
+        return new_font, stroke_size
